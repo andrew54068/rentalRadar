@@ -4,10 +4,6 @@ import bs4
 # debug
 import pprint
 
-# DB
-import mysql.connector
-from mysql.connector import errorcode
-
 from Subject import Subject
 
 def data_from_url_string(url_string: str):
