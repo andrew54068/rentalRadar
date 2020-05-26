@@ -1,7 +1,7 @@
 class Subject:
 
-    def __init__(self, id, name, price, location, sub_type, size, floor, contact_person, url):
-        self.id = id
+    def __init__(self, subject_id: str, name: str, price: str, location: str, sub_type: str, size: str, floor: str, contact_person: str, url: str):
+        self.subject_id = subject_id
         self.name = name
         self.price = price
         self.location = location
@@ -12,7 +12,7 @@ class Subject:
         self.url = url
 
     def __str__(self):
-        return ("id: " + str(self.id) + "\n" +
+        return ("id: " + str(self.subject_id) + "\n" +
         "name: " + str(self.name) + "\n" + 
         "price: " + str(self.price) + "\n" + 
         "location: " + self.location + "\n" + 
