@@ -29,7 +29,7 @@ def __fetchSubject(root):
 
         # name
         result = subject_tree.find("a", target="_blank")
-        name = re.sub('\W+',' ',result.string).strip()
+        name = re.sub('(?=\W+)(?=[^!-~:]+)','',result.string).strip()
         # pprint.pprint(name)
 
         # price
