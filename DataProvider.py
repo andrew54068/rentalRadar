@@ -77,6 +77,5 @@ def get_subjects_from_url(url: str):
     data = __data_from_url_string(url)
     subjects = __fetchSubject(bs4.BeautifulSoup(data, "html.parser"))
     for sub in subjects:
-        # print('')
-        print(sub.name)
+        print(sub)
     return subjects
