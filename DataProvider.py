@@ -1,6 +1,7 @@
 import urllib.request as req
 import bs4
 import re
+import json
 
 # debug
 import pprint
@@ -29,7 +30,8 @@ def __fetchSubject(root):
 
         # name
         result = subject_tree.find("a", target="_blank")
-        name = re.sub('(?=\W+)(?=[^!-~:]+)','',result.string).strip()
+        name = json.dumps(result.string)
+        # name = re.sub('(?=\W+)(?=[^!-~:]+)','',result.string).strip()
         # pprint.pprint(name)
 
         # price
