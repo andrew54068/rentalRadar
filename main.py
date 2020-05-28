@@ -14,4 +14,4 @@ while 1:
     url = "https://rent.591.com.tw/?kind=0&region=1&order=posttime&orderType=desc"
     subjects = DataProvider.get_subjects_from_url(url)
     db.update_subject(subjects)
-    time.sleep(10 * 60)
+    time.sleep(20)

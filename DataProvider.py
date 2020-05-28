@@ -3,6 +3,13 @@ import bs4
 import re
 import json
 
+import regex as regex
+
+import string
+import unicodedata
+
+from chardet import detect
+
 # debug
 import pprint
 
@@ -30,9 +37,8 @@ def __fetchSubject(root):
 
         # name
         result = subject_tree.find("a", target="_blank")
-        name = json.dumps(result.string)
-        # name = re.sub('(?=\W+)(?=[^!-~:]+)','',result.string).strip()
-        # pprint.pprint(name)
+        temp = str(result.string)
+        name = remove_control_characters(temp)
 
         # price
         result = subject_tree.find("div", class_="price")
@@ -79,5 +85,19 @@ def get_subjects_from_url(url: str):
     data = __data_from_url_string(url)
     subjects = __fetchSubject(bs4.BeautifulSoup(data, "html.parser"))
     for sub in subjects:
-        print(sub)
+        print(sub.name)
     return subjects
+
+# def remove_control_characters(s):
+#     return "".join(ch for ch in s if unicodedata.category(ch)[0]!="C")
+
+
+def remove_control_characters(str):
+    return regex.sub(r'\p{C}', '', str)
+
+# def filter_non_printable(string: str):
+#     result = ""
+#     for c in string:
+#         if c.isprintable():
+#             result + c
+#     return result
