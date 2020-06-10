@@ -1,19 +1,12 @@
 import urllib.request as req
 import bs4
-import re
+import base64
 import json
-
-import regex as regex
-
-import string
-import unicodedata
-
-from chardet import detect
 
 # debug
 import pprint
 
-from Subject import Subject
+from subject import Subject
 
 def __data_from_url_string(url_string: str):
     with req.urlopen(url_string) as response:
@@ -37,8 +30,8 @@ def __fetchSubject(root):
 
         # name
         result = subject_tree.find("a", target="_blank")
-        temp = str(result.string)
-        name = remove_control_characters(temp)
+        temp = str(result.string).encode("UTF-8")
+        name = base64.b64encode(temp)
 
         # price
         result = subject_tree.find("div", class_="price")
@@ -85,19 +78,6 @@ def get_subjects_from_url(url: str):
     data = __data_from_url_string(url)
     subjects = __fetchSubject(bs4.BeautifulSoup(data, "html.parser"))
     for sub in subjects:
-        print(sub.name)
+        encoded_name = base64.b64decode(sub.name)
+        print(encoded_name.decode("UTF-8"))
     return subjects
-
-# def remove_control_characters(s):
-#     return "".join(ch for ch in s if unicodedata.category(ch)[0]!="C")
-
-
-def remove_control_characters(str):
-    return regex.sub(r'\p{C}', '', str)
-
-# def filter_non_printable(string: str):
-#     result = ""
-#     for c in string:
-#         if c.isprintable():
-#             result + c
-#     return result
