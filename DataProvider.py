@@ -2,20 +2,31 @@ import urllib.request as req
 import bs4
 import base64
 import json
+import socket
+import urllib.error as urlError
 
 # debug
 import pprint
 
 from subject import Subject
 
+
 def __data_from_url_string(url_string: str):
-    with req.urlopen(url_string) as response:
-        return response.read().decode("utf-8")
+    try:
+        with req.urlopen(url_string) as response:
+            return response.read().decode("utf-8")
+    except socket.gaierror as error:
+        # raise AssertionError
+        raise Exception(f"socket error: {error}")
+    except urlError.URLError as error:
+        raise Exception(f"URLError error: {error}")
+
 
 def __replace_all(text, dic):
     for i, j in dic.items():
         text = text.replace(i, j)
     return text
+
 
 def __fetchSubject(root):
     # subject means rental house
@@ -37,7 +48,7 @@ def __fetchSubject(root):
         result = subject_tree.find("div", class_="price")
         price = str(result.i.string)
         # pprint.pprint(price)
-        
+
         # location
         result = subject_tree.find("em")
         location = str(result.string)
@@ -69,15 +80,20 @@ def __fetchSubject(root):
         url = "https:" + str(result.h3.a["href"])
         # pprint.pprint(url)
 
-        subject = Subject(subject_id, name, price, location, sub_type, size, floor, contact_person, url)
+        subject = Subject(subject_id, name, price, location,
+                          sub_type, size, floor, contact_person, url)
         subjects.append(subject)
 
     return subjects
 
+
 def get_subjects_from_url(url: str):
-    data = __data_from_url_string(url)
-    subjects = __fetchSubject(bs4.BeautifulSoup(data, "html.parser"))
-    for sub in subjects:
-        encoded_name = base64.b64decode(sub.name)
-        print(encoded_name.decode("UTF-8"))
-    return subjects
+    try:
+        data = __data_from_url_string(url)
+        subjects = __fetchSubject(bs4.BeautifulSoup(data, "html.parser"))
+        for sub in subjects:
+            encoded_name = base64.b64decode(sub.name)
+            print(encoded_name.decode("UTF-8"))
+        return subjects
+    except:
+        raise Exception("data from url response error.")
