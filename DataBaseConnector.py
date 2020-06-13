@@ -1,9 +1,11 @@
+import uuid
 # DB
 import mysql.connector as connector
 from mysql.connector import errorcode
 from datetime import datetime
 
 from preference import Preference
+from User_token import User_token
 
 # debug
 import pprint
@@ -22,23 +24,14 @@ class DataBaseConnector:
 
             self.__cursor = self.__db.cursor()
             self.__create_subject_table()
-            self.__create_user_table()
+            self.__create_user_info_table()
+            self.__create_user_token_table()
             self.__create_user_preference_table()
 
         except connector.Error as error:
             print(error)
             print(error.msg)
-    
-    def alter_table(self):
-        query = """
-            ALTER TABLE rental_subjects
-            DROP COLUMN value;
-        """
-            # ADD 
-            #     created_at datetime NOT NULL DEFAULT NOW();
-                # updated_at datetime NOT NULL DEFAULT NOW() ON UPDATE NOW(),
-            # alter table rental_subjects change `name` `name` varchar(255) character utf8;
-        self.__execute_sql_command(query)
+
 
     def __create_subject_table(self):
         query = """CREATE TABLE IF NOT EXISTS `rental_subjects` (
@@ -120,12 +113,14 @@ class DataBaseConnector:
         self.__db._execute_query(command)
         self.__db.commit()
 
-    def __create_user_table(self):
-        query = """CREATE TABLE IF NOT EXISTS `user` (
-              `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+
+
+    def __create_user_info_table(self):
+        query = """CREATE TABLE IF NOT EXISTS `user_info` (
+              `id` varchar(36) NOT NULL,
               `name` varchar(255) NOT NULL,
               `email` varchar(255),
-              `phone` varchar(20),
+              `phone` varchar(255),
               `create_date` datetime DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`id`),
               UNIQUE KEY `id` (`id`)
@@ -137,6 +132,90 @@ class DataBaseConnector:
         except connector.Error as error:
             print(error)
             print(error.msg)
+
+    def update_user_info(self, user_info: str):
+        sqlCommand = """
+            INSERT INTO user_info(
+                id, name
+            )
+            VALUES(
+                %s, %s
+            )
+        """
+
+        try:
+            new_uuid = str(uuid.uuid4())
+            data = (new_uuid, user_info)
+            self.__cursor.execute(sqlCommand, data)
+            self.__db.commit()
+            print("here is id from token")
+            print(id)
+        except connector.Error as error:
+            print(error)
+            print(error.msg)
+
+
+
+    def __create_user_token_table(self):
+        query = """CREATE TABLE IF NOT EXISTS `user_token` (
+              `id` varchar(36) NOT NULL,
+              `device_token` varchar(255),
+              `create_date` datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `id` (`id`),
+              UNIQUE KEY `device_token` (`device_token`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+            """
+        try:
+            self.__db._execute_query(query)
+            self.__db.commit()
+        except connector.Error as error:
+            print(error)
+            print(error.msg)
+
+    def get_user_token(self, user_id: str):
+        sqlCommand = """
+        SELECT device_token 
+        FROM user_token
+        WHERE id = %s
+        """
+
+        try:
+            id = (user_id,)
+            self.__cursor.execute(sqlCommand, id)
+            result = self.__cursor.fetchall()
+            if len(result) > 0: 
+                first_result = result[0]
+                first_element = first_result[0]
+                self.__db.commit()
+                return first_element
+            else:
+                self.__db.commit()
+                return None
+
+        except connector.Error as error:
+            print(error)
+            print(error.msg)
+
+    def update_user_token(self, user_token: User_token):
+        sqlCommand = """
+            INSERT INTO user_token(
+                id, device_token
+            )
+            VALUES(
+                %s, %s
+            )
+        """
+
+        try:
+            data = (user_token.user_id, user_token.device_token)
+            self.__cursor.execute(sqlCommand, data)
+            self.__db.commit()
+        except connector.Error as error:
+            print(error)
+            print(error.msg)
+
+
 
     def __create_user_preference_table(self):
         query = """CREATE TABLE IF NOT EXISTS `user_preference` (
@@ -160,6 +239,35 @@ class DataBaseConnector:
             ADD value varchar(255) NOT NULL DEFAULT '';
         """
         self.__execute_sql_command(query)
+
+    def get_user_preference(self, user_id: str):
+        sqlCommand = """
+        SELECT type, value 
+        FROM user_preference
+        WHERE user_id = %s
+        """
+
+        try:
+            id = (user_id,)
+            self.__cursor.execute(sqlCommand, id)
+            result = self.__cursor.fetchall()
+            self.__db.commit()
+            print(result)
+            if len(result) > 0: 
+                # for element in result
+                pres = []
+                for element in result:
+                    if len(element) == 2:
+                        pres.append(Preference(user_id, element[0], element[1]))
+                    else:
+                        raise TypeError
+                return pres
+            else:
+                return None
+
+        except connector.Error as error:
+            print(error)
+            print(error.msg)
 
     
     def update_user_preference(self, preferences: [Preference]):

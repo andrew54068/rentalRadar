@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import time
 import sys
 
-from DataBaseConnector import DataBaseConnector
+import DataBaseConnector as DataBaseConnector
 import DataProvider as DataProvider
 
 from preference import Preference
