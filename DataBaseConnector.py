@@ -31,17 +31,17 @@ class DataBaseConnector:
     
     def alter_table(self):
         query = """
-            ALTER TABLE balances
+            ALTER TABLE rental_subjects
             DROP COLUMN value;
         """
             # ADD 
             #     created_at datetime NOT NULL DEFAULT NOW();
                 # updated_at datetime NOT NULL DEFAULT NOW() ON UPDATE NOW(),
-            # alter table balances change `name` `name` varchar(255) character utf8;
+            # alter table rental_subjects change `name` `name` varchar(255) character utf8;
         self.__execute_sql_command(query)
 
     def __create_subject_table(self):
-        query = """CREATE TABLE IF NOT EXISTS `balances` (
+        query = """CREATE TABLE IF NOT EXISTS `rental_subjects` (
               `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
               `subject_id` varchar(10) NOT NULL,
               `name` varchar(255) NOT NULL DEFAULT '',
@@ -67,7 +67,7 @@ class DataBaseConnector:
 
     def update_subject(self, subjects):
         sqlCommand = """
-            INSERT INTO balances(
+            INSERT INTO rental_subjects(
             subject_id, name, price, location, sub_type, size, floor, contact_person, url, created_at
             ) 
             VALUES(
@@ -106,13 +106,13 @@ class DataBaseConnector:
 
     def drop_table(self):
         sqlCommand = """
-        DROP TABLE balances
+        DROP TABLE rental_subjects
         """
         self.__execute_sql_command(sqlCommand)
 
     def clear_table(self):
         sqlCommand = """
-        TRUNCATE TABLE balances
+        TRUNCATE TABLE rental_subjects
         """
         self.__execute_sql_command(sqlCommand)
 
