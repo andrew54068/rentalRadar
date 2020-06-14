@@ -8,8 +8,10 @@ from User_token import User_token
 import Crawler
 
 from preference import PreferenceEncoder
+import push_notification
 
 app = Flask(__name__)
+
 
 @app.route('/')
 def index():
@@ -25,6 +27,7 @@ def fetch_user_token():
     else:
         return jsonify({'device_token': f"{token}"}), 200
 
+
 @app.route('/api/v1/user/uploadToken', methods=['POST'])
 def get_user_token():
     request_data = request.json
@@ -32,11 +35,13 @@ def get_user_token():
     print(device_token)
 
     if device_token is not None and type(device_token) is str:
-        user = User_token("fa210389-a8f6-402c-8681-ce8b628fbd88", str(device_token))
+        user = User_token(
+            "fa210389-a8f6-402c-8681-ce8b628fbd88", str(device_token))
         db.update_user_token(user)
         return jsonify({'message': "success"}), 200
     else:
         return jsonify({'error': "device_token not provided or is not string"}), 400
+
 
 @app.route('/api/v1/user/preference', methods=['GET'])
 def fetch_tasks():
@@ -82,3 +87,4 @@ if __name__ == '__main__':
     db = DataBaseConnector()
     # Crawler.start_crawl(db)
     app.run(host='127.0.0.1', debug=True)
+    push_notification.send_push_notification(db)
