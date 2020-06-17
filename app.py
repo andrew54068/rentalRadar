@@ -6,6 +6,12 @@ from DataBaseConnector import DataBaseConnector
 from preference import Preference
 from User_token import User_token
 import Crawler
+import os
+from flask_jwt_extended import (
+    JWTManager, jwt_required, create_access_token,
+    jwt_refresh_token_required, create_refresh_token,
+    get_jwt_identity
+)
 
 from preference import PreferenceEncoder
 import push_notification
@@ -13,22 +19,53 @@ import push_notification
 app = Flask(__name__)
 
 
-@app.route('/')
+jwt = JWTManager()
+
+# 設定 JWT 密鑰
+# Setup the Flask-JWT-Extended extension
+app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
+jwt.init_app(app)
+
+@app.route('/api/v1/login', methods=['POST'])
+def login():
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+    if username != 'test' or password != 'test':
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    # Use create_access_token() and create_refresh_token() to create our
+    # access and refresh tokens
+    ret = {
+        'access_token': create_access_token(identity=username),
+        'refresh_token': create_refresh_token(identity=username)
+    }
+    return jsonify(ret), 200
+
+@app.route('/api/v1/refresh', methods=['POST'])
+@jwt_refresh_token_required
+def refresh():
+    current_user = get_jwt_identity()
+    ret = {
+        'access_token': create_access_token(identity=current_user)
+    }
+    return jsonify(ret), 200
+
+
+@app.route('/', methods=['POST'])
+@jwt_required
 def index():
-    return "Hello, World!"
+    current_user = get_jwt_identity()
+    return f"Hello, World! {current_user}"
 
 
-@app.route('/api/v1/user/token', methods=['GET'])
-def fetch_user_token():
-    user_id = request.args.get('user_id')
+# @app.route('/api/v1/user/token', methods=['GET'])
+def fetch_user_token(user_id: str):
     token = db.get_user_token(user_id)
-    if token is None:
-        return jsonify({'error': "device_token not found"}), 400
-    else:
-        return jsonify({'device_token': f"{token}"}), 200
+    return token
 
 
 @app.route('/api/v1/user/uploadToken', methods=['POST'])
+@jwt_required
 def get_user_token():
     request_data = request.json
     device_token = request_data.get('device_token')
@@ -44,6 +81,7 @@ def get_user_token():
 
 
 @app.route('/api/v1/user/preference', methods=['GET'])
+@jwt_required
 def fetch_tasks():
     user_id = request.args.get('user_id')
     try:
@@ -59,6 +97,7 @@ def fetch_tasks():
 
 
 @app.route('/api/v1/user/uploadPreference', methods=['POST'])
+@jwt_required
 def get_tasks():
     request_data = request.json
     if isinstance(request_data, list):
