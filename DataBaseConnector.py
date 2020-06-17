@@ -10,17 +10,18 @@ from User_token import User_token
 # debug
 import pprint
 
+
 class DataBaseConnector:
 
     def __init__(self):
         try:
             self.__db = connector.connect(
-                host = "127.0.0.1",
-                user = "root",
-                password = "password",
-                port = "3307",
-                database = "rental",
-                auth_plugin = 'mysql_native_password')
+                host="127.0.0.1",
+                user="root",
+                password="password",
+                port="3307",
+                database="rental",
+                auth_plugin='mysql_native_password')
 
             self.__cursor = self.__db.cursor()
             self.__create_subject_table()
@@ -31,7 +32,6 @@ class DataBaseConnector:
         except connector.Error as error:
             print(error)
             print(error.msg)
-
 
     def __create_subject_table(self):
         query = """CREATE TABLE IF NOT EXISTS `rental_subjects` (
@@ -79,6 +79,7 @@ class DataBaseConnector:
         """
         # %s, %s, %s, %s, %s, %s, %s, %s, %s
         # ?, ?, ?, ?, ?, ?, ?, ?, ?
+
         def mapping(datum):
             return (
                 datum.subject_id,
@@ -92,7 +93,7 @@ class DataBaseConnector:
                 datum.url,
                 datetime.now()
             )
-        
+
         subjects = map(mapping, subjects)
         self.__cursor.executemany(sqlCommand, subjects)
         self.__db.commit()
@@ -113,17 +114,18 @@ class DataBaseConnector:
         self.__db._execute_query(command)
         self.__db.commit()
 
-
-
     def __create_user_info_table(self):
         query = """CREATE TABLE IF NOT EXISTS `user_info` (
-              `id` varchar(36) NOT NULL,
+              `id` int(11) NOT NULL AUTO_INCREMENT,
               `name` varchar(255) NOT NULL,
-              `email` varchar(255),
-              `phone` varchar(255),
+              `email` varchar(255) NOT NULL,
+              `password` varchar(255) NOT NULL,
+              `phone` varchar(255) NOT NULL,
               `create_date` datetime DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`id`),
-              UNIQUE KEY `id` (`id`)
+              UNIQUE KEY `id` (`id`),
+              UNIQUE KEY `email` (`email`),
+              UNIQUE KEY `phone` (`phone`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
             """
         try:
@@ -133,27 +135,52 @@ class DataBaseConnector:
             print(error)
             print(error.msg)
 
-    def update_user_info(self, user_info: str):
+    def register_user(self, user_name, email, password, phone):
         sqlCommand = """
             INSERT INTO user_info(
-                id, name
+                name, email, password, phone
             )
             VALUES(
-                %s, %s
+                %s, %s, %s, %s
             )
         """
 
         try:
-            new_uuid = str(uuid.uuid4())
-            data = (new_uuid, user_info)
+            data = (user_name, email, password, phone)
             self.__cursor.execute(sqlCommand, data)
             self.__db.commit()
-            print("here is id from token")
-            print(id)
+            latest_user_id = str(self.__cursor.lastrowid)
+            print(f"latest_user_id: {latest_user_id}")
+            return latest_user_id
         except connector.Error as error:
             print(error)
             print(error.msg)
+            return None
 
+    def get_user_id(self, email):
+        sqlCommand = """
+            SELECT id, password
+            FROM user_info
+            WHERE email = %s
+        """
+
+        try:
+            email = (email,)
+            self.__cursor.execute(sqlCommand, email)
+            result = self.__cursor.fetchall()
+            if len(result) > 0:
+                first_result = result[0]
+                id = first_result[0]
+                password_hash = first_result[1]
+                self.__db.commit()
+                return (id, password_hash)
+            else:
+                self.__db.commit()
+                return None
+
+        except connector.Error as error:
+            print(error)
+            print(error.msg)
 
 
     def __create_user_token_table(self):
@@ -184,7 +211,7 @@ class DataBaseConnector:
             id = (user_id,)
             self.__cursor.execute(sqlCommand, id)
             result = self.__cursor.fetchall()
-            if len(result) > 0: 
+            if len(result) > 0:
                 first_result = result[0]
                 first_element = first_result[0]
                 self.__db.commit()
@@ -214,8 +241,6 @@ class DataBaseConnector:
         except connector.Error as error:
             print(error)
             print(error.msg)
-
-
 
     def __create_user_preference_table(self):
         query = """CREATE TABLE IF NOT EXISTS `user_preference` (
@@ -253,12 +278,13 @@ class DataBaseConnector:
             result = self.__cursor.fetchall()
             self.__db.commit()
             print(result)
-            if len(result) > 0: 
+            if len(result) > 0:
                 # for element in result
                 pres = []
                 for element in result:
                     if len(element) == 2:
-                        pres.append(Preference(user_id, element[0], element[1]))
+                        pres.append(Preference(
+                            user_id, element[0], element[1]))
                     else:
                         raise TypeError
                 return pres
@@ -269,7 +295,6 @@ class DataBaseConnector:
             print(error)
             print(error.msg)
 
-    
     def update_user_preference(self, preferences: [Preference]):
         sqlCommand = """
             INSERT INTO user_preference(
@@ -290,7 +315,7 @@ class DataBaseConnector:
                 datum.type,
                 datum.value
             )
-        
+
         preferences = map(mapping, preferences)
 
         try:
