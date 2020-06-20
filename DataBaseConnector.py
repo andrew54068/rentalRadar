@@ -5,7 +5,9 @@ from mysql.connector import errorcode
 from datetime import datetime
 
 from preference import Preference
+from subject import Subject
 from User_token import User_token
+from rrError import SqlError
 
 # debug
 import pprint
@@ -244,9 +246,12 @@ class DataBaseConnector:
 
     def __create_user_preference_table(self):
         query = """CREATE TABLE IF NOT EXISTS `user_preference` (
-              `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-              `type` int(3) unsigned NOT NULL,
-              `user_id` int(11) unsigned,
+              `id` int(11) unsigned NOT NULL ,
+              `region` varchar(255),
+              `kind` varchar(255),
+              `rent_price` int(11) unsigned,
+              `pattern` varchar(255),
+              `space` varchar(255),
               `create_date` datetime DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -283,6 +288,7 @@ class DataBaseConnector:
                 pres = []
                 for element in result:
                     if len(element) == 2:
+                        pref = Preference()
                         pres.append(Preference(
                             user_id, element[0], element[1]))
                     else:
@@ -295,31 +301,40 @@ class DataBaseConnector:
             print(error)
             print(error.msg)
 
-    def update_user_preference(self, preferences: [Preference]):
-        sqlCommand = """
+    def update_user_preference(self, preference: Preference):
+        print(f"{preference.sql_insert_field_string()}")
+        # print(f"{",".join(['%s'] * preference.sql_insert_value_count())}")
+        print(f"{preference.on_duplicate_key_update_string()}")
+        sqlCommand = f"""
             INSERT INTO user_preference(
-            user_id, type, value
+                {preference.sql_insert_field_string()}
             ) 
             VALUES(
-                %s, %s, %s
+                {preference.sql_insert_value_string()}
             )
             ON DUPLICATE KEY UPDATE 
-            user_id=VALUES(user_id), 
-            type=VALUES(type),
-            value=VALUES(value)
+            {preference.on_duplicate_key_update_string()}
         """
-
-        def mapping(datum):
-            return (
-                datum.user_id,
-                datum.type,
-                datum.value
-            )
-
-        preferences = map(mapping, preferences)
+        print(sqlCommand)
 
         try:
-            self.__cursor.executemany(sqlCommand, preferences)
+            self.__execute_sql_command(sqlCommand)
+            self.__db.commit()
+        except connector.Error as error:
+            print(error)
+            print(error.msg)
+            raise SqlError(error.msg)
+
+    # retrive user's device token for push notification if subject match user's preference.
+    def get_subscribe_user_from_subject(self, subject: Subject):
+        sqlCommand = """
+            
+        """
+
+        data = (subject.location, subject.sub_type)
+
+        try:
+            self.__cursor.execute(sqlCommand, data)
             self.__db.commit()
         except connector.Error as error:
             print(error)

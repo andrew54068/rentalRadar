@@ -7,6 +7,7 @@ import DataBaseConnector as DataBaseConnector
 import DataProvider as DataProvider
 
 from preference import Preference
+from push_notification import NotificationManager
 
 # db = DataBaseConnector()
 # db.alter_table_preference()
@@ -21,6 +22,8 @@ def start_crawl(db: DataBaseConnector):
             subjects = DataProvider.get_subjects_from_url(url)
             if subjects is not None:
                 db.update_subject(subjects)
+                manager = NotificationManager(db)
+                
             else:
                 print("subject is none.")
         except:

@@ -13,8 +13,8 @@ from preference import Preference
 from User_token import User_token
 import Crawler
 from preference import PreferenceEncoder
-import push_notification
 from PasswordChecher import PasswordChecher
+from rrError import (SqlError)
 
 app = Flask(__name__)
 
@@ -28,6 +28,7 @@ jwt = JWTManager()
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 jwt.init_app(app)
 
+# Crawler.start_crawl(db)
 
 @app.route('/api/v1/signUp', methods=['POST'])
 def sign_up():
@@ -138,32 +139,29 @@ def fetch_tasks():
 
 
 @app.route('/api/v1/user/uploadPreference', methods=['POST'])
-@jwt_required
-def get_tasks():
+# @jwt_required
+def update_preference():
     request_data = request.json
-    if isinstance(request_data, list):
-        prs = []
-        for element in request_data:
-            user_id = element.get('user_id')
-            filter_type = element.get('filter_type')
-            value = element.get('filter_value')
 
-            if not user_id:
-                return jsonify({'error': "user_id in one of element not provided."}), 400
-            if not filter_type:
-                return jsonify({'error': "filter_type in one of element not provided."}), 400
-            if not value:
-                return jsonify({'error': "filter_value in one of element not provided."}), 400
-            prs.append(Preference(user_id, filter_type, value))
+    user_id = request_data.get('user_id')
+    region = request_data.get('region')
+    kind = request_data.get('kind')
+    rent_price = request_data.get('rent_price')
+    pattern = request_data.get('pattern')
+    space = request_data.get('space')
 
-        db.update_user_preference(prs)
-    else:
-        return jsonify({'error': "request body is not array."}), 400
+    if not user_id:
+        return jsonify({'error': "user_id not provided."}), 400
+    
+    pref = Preference(user_id, region, kind, rent_price, pattern, space)
+
+    try:
+        db.update_user_preference(pref)
+    except SqlError as error:
+        return jsonify({'error': error.message}), 400
 
     return jsonify({'message': "success"}), 200
 
 
 if __name__ == '__main__':
-    # Crawler.start_crawl(db)
     app.run(host='127.0.0.1', debug=True)
-    push_notification.send_push_notification(db)
