@@ -16,16 +16,28 @@ from push_notification import NotificationManager
 # db.clear_table()
 
 def start_crawl(db: DataBaseConnector):
-    while 1:
-        try:
+    try:
+        while 1: 
             url = "https://rent.591.com.tw/?kind=0&region=1&order=posttime&orderType=desc"
             subjects = DataProvider.get_subjects_from_url(url)
+            manager = NotificationManager()
             if subjects is not None:
-                db.update_subject(subjects)
-                manager = NotificationManager(db)
-                
+                new_subjects = db.update_subject(subjects)
+                # print(f"new_subjects: {new_subjects}")
+                for subject in new_subjects:
+                    # print(f"subject: {subject}")
+
+                    user_ids = db.get_subscribe_user_from_subject(subject)
+                    # print(f"{len(user_ids) > 0}")
+                    if len(user_ids) > 0:
+                        print(f"user_ids: {user_ids}")
+                        user_tokens = db.get_user_tokens(user_ids)
+                        if len(user_tokens) > 0:
+                            print(f"user_tokens: {user_tokens}")
+                            manager.send_push_notification(user_tokens)
+
             else:
                 print("subject is none.")
-        except:
-            raise AssertionError("Oops!", str(sys.exc_info()[1]), "occurred.")
-        time.sleep(20)
+            time.sleep(20)
+    except:
+        raise AssertionError("Oops!", str(sys.exc_info()[1]), "occurred.")

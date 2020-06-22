@@ -111,11 +111,11 @@ def fetch_user_token(user_id: str):
 def get_user_token():
     request_data = request.json
     device_token = request_data.get('device_token')
+    current_user = get_jwt_identity()
     print(device_token)
 
     if device_token is not None and type(device_token) is str:
-        user = User_token(
-            "fa210389-a8f6-402c-8681-ce8b628fbd88", str(device_token))
+        user = User_token(current_user, str(device_token))
         db.update_user_token(user)
         return jsonify({'message': "success"}), 200
     else:
@@ -146,6 +146,7 @@ def update_preference():
     user_id = request_data.get('user_id')
     region = request_data.get('region')
     kind = request_data.get('kind')
+    
     rent_price = request_data.get('rent_price')
     pattern = request_data.get('pattern')
     space = request_data.get('space')
@@ -153,7 +154,17 @@ def update_preference():
     if not user_id:
         return jsonify({'error': "user_id not provided."}), 400
     
-    pref = Preference(user_id, region, kind, rent_price, pattern, space)
+    if not region:
+        return jsonify({'error': "region not provided."}), 400
+    
+    pref = Preference(
+        user_id, 
+        region, 
+        kind if kind is not None else '', 
+        rent_price if rent_price is not None else 0, 
+        pattern if pattern is not None else '', 
+        space if space is not None else ''
+    )
 
     try:
         db.update_user_preference(pref)
@@ -164,4 +175,5 @@ def update_preference():
 
 
 if __name__ == '__main__':
+    Crawler.start_crawl(db)
     app.run(host='127.0.0.1', debug=True)

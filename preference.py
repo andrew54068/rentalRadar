@@ -3,6 +3,10 @@ from json import JSONEncoder
 
 class Preference:
 
+    # region: 台北市
+    # kind: 分租套房
+    # pattern: 3房
+    # space: 坪數
     def __init__(self, user_id: str, region: str, kind: str, rent_price: int, pattern: str, space: str):
         self.user_id = user_id
         self.region = region
@@ -37,7 +41,7 @@ class Preference:
         result_list = [f"{self.user_id}"]
         self.region is not None and result_list.append(f"'{self.region}'")
         self.kind is not None and result_list.append(f"'{self.kind}'")
-        self.rent_price is not None and result_list.append(self.rent_price)
+        self.rent_price is not None and result_list.append(str(self.rent_price))
         self.pattern is not None and result_list.append(f"'{self.pattern}'")
         self.space is not None and result_list.append(f"'{self.space}'")
         return ",".join(result_list)
