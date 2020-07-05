@@ -24,7 +24,7 @@ def start_crawl(db: DataBaseConnector):
             if subjects is not None:
                 new_subjects = db.update_subject(subjects)
                 # print(f"new_subjects: {new_subjects}")
-                for subject in new_subjects:
+                for subject in list(new_subjects)[0:1]:
                     # print(f"subject: {subject}")
 
                     user_ids = db.get_subscribe_user_from_subject(subject)
@@ -34,7 +34,7 @@ def start_crawl(db: DataBaseConnector):
                         user_tokens = db.get_user_tokens(user_ids)
                         if len(user_tokens) > 0:
                             print(f"user_tokens: {user_tokens}")
-                            manager.send_push_notification(user_tokens)
+                            manager.send_push_notification(user_tokens, subject)
 
             else:
                 print("subject is none.")

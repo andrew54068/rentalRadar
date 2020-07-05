@@ -2,13 +2,14 @@
 from pyfcm import FCMNotification
 from dotenv import load_dotenv
 import os
+import base64
 
 from DataBaseConnector import DataBaseConnector
 from subject import Subject
 
 class NotificationManager:
 
-    def send_push_notification(self, user_tokens):
+    def send_push_notification(self, user_tokens, subject: Subject):
 
         fcm_api_key = os.getenv("FCM_API_KEY")
         # print(fcm_api_key)
@@ -17,8 +18,7 @@ class NotificationManager:
 
         # OR initialize with proxies
 
-        proxy_dict = {}
-        push_service = FCMNotification(api_key=fcm_api_key, proxy_dict=proxy_dict)
+        push_service = FCMNotification(api_key=fcm_api_key)
 
         # Your api-key can be gotten from:  https://console.firebase.google.com/project/<project-name>/settings/cloudmessaging
 
@@ -30,6 +30,13 @@ class NotificationManager:
 
         # Send to multiple devices by passing a list of ids.
         registration_ids = user_tokens
-        message_title = "發現新物件！！"
-        message_body = "點擊查看"
-        result = push_service.notify_multiple_devices(registration_ids=registration_ids, message_title=message_title, message_body=message_body)
+
+        temp = base64.b64decode(subject.name)
+        name = temp.decode("UTF-8")
+
+        message_title = f"{name}"
+        message_body = f"{subject.location}/{subject.region}/{subject.location}/{subject.price}"
+        data_message = {'subject_id': f'{subject.subject_id}'}
+        
+        result = push_service.notify_multiple_devices(registration_ids=registration_ids, message_title=message_title, message_body=message_body, data_message=data_message)
+        print(f"push result: {result}")
