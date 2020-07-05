@@ -30,6 +30,7 @@ jwt.init_app(app)
 
 # Crawler.start_crawl(db)
 
+
 @app.route('/api/v1/signUp', methods=['POST'])
 def sign_up():
     username = request.json.get('username', None)
@@ -38,7 +39,7 @@ def sign_up():
     hashed_pw = pw_checker.hash_password(password).decode('utf-8')
     phone = request.json.get('phone', None)
 
-    if db.get_user_id(email) is None:
+    if db.get_user_id_with_password_hash(email) is None:
         user_id = db.register_user(username, email, hashed_pw, phone)
 
         if user_id is not None:
@@ -53,6 +54,7 @@ def sign_up():
 
     else:
         return jsonify({'error': "email already registed."}), 400
+
 
 @app.route('/api/v1/login', methods=['POST'])
 def login():
@@ -71,6 +73,21 @@ def login():
         return jsonify(ret), 200
     else:
         return jsonify({'error': "user not found or password incorrect."}), 400
+
+
+@app.route('/api/v1/anonymousLogin', methods=['POST'])
+def anonymousLogin():
+    deviceUUID = request.headers.get('deviceUUID', None)
+
+    if deviceUUID is not None:
+        # Use create_access_token() and create_refresh_token() to create our
+        # access and refresh tokens
+        ret = {
+            'access_token': create_access_token(identity=str(deviceUUID), expires_delta=False),
+        }
+        return jsonify(ret), 200
+    else:
+        return jsonify({'error': "deviceUUID not found."}), 400
 
 
 @app.route('/api/v1/refreshUpdate', methods=['POST'])
@@ -106,11 +123,11 @@ def fetch_user_token(user_id: str):
     return token
 
 
-@app.route('/api/v1/user/uploadToken', methods=['POST'])
+@app.route('/api/v1/user/uploadFcmToken', methods=['POST'])
 @jwt_required
 def get_user_token():
     request_data = request.json
-    device_token = request_data.get('device_token')
+    device_token = request_data.get('fcm_token')
     current_user = get_jwt_identity()
     print(device_token)
 
@@ -119,7 +136,7 @@ def get_user_token():
         db.update_user_token(user)
         return jsonify({'message': "success"}), 200
     else:
-        return jsonify({'error': "device_token not provided or is not string"}), 400
+        return jsonify({'error': "fcm_token not provided or is not string"}), 400
 
 
 @app.route('/api/v1/user/preference', methods=['GET'])
@@ -139,30 +156,30 @@ def fetch_tasks():
 
 
 @app.route('/api/v1/user/uploadPreference', methods=['POST'])
-# @jwt_required
+@jwt_required
 def update_preference():
     request_data = request.json
 
-    user_id = request_data.get('user_id')
+    user_id = get_jwt_identity()
     region = request_data.get('region')
     kind = request_data.get('kind')
-    
+
     rent_price = request_data.get('rent_price')
     pattern = request_data.get('pattern')
     space = request_data.get('space')
 
-    if not user_id:
-        return jsonify({'error': "user_id not provided."}), 400
-    
+    # if not user_id:
+    #     return jsonify({'error': "user_id not provided."}), 400
+
     if not region:
         return jsonify({'error': "region not provided."}), 400
-    
+
     pref = Preference(
-        user_id, 
-        region, 
-        kind if kind is not None else '', 
-        rent_price if rent_price is not None else 0, 
-        pattern if pattern is not None else '', 
+        user_id,
+        region,
+        kind if kind is not None else '',
+        rent_price if rent_price is not None else 0,
+        pattern if pattern is not None else '',
         space if space is not None else ''
     )
 
