@@ -74,10 +74,10 @@ class DataBaseConnector:
 
         sqlCommand = """
             INSERT INTO rental_subjects(
-            subject_id, name, price, location, sub_type, size, floor, contact_person, url, created_at
+            subject_id, name, price, location, sub_type, size, floor, contact_person, url, created_at, updated_at
             ) 
             VALUES(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             ON DUPLICATE KEY UPDATE 
             name=VALUES(name), 
@@ -88,7 +88,7 @@ class DataBaseConnector:
             floor=VALUES(floor),
             contact_person=VALUES(contact_person),
             url=VALUES(url),
-            created_at=VALUES(created_at)
+            updated_at=VALUES(updated_at)
         """
 
         def mapping(datum):
@@ -102,6 +102,7 @@ class DataBaseConnector:
                 datum.floor if datum.floor is not None else '',
                 datum.contact_person if datum.contact_person is not None else '',
                 datum.url if datum.url is not None else '',
+                datetime_str,
                 datetime_str
             )
 
