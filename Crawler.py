@@ -22,7 +22,7 @@ def start_crawl(db: DataBaseConnector):
             subjects = DataProvider.get_subjects_from_url(url)
             manager = NotificationManager()
             if subjects is not None:
-                new_subjects = db.update_subject(subjects)
+                new_subjects = list(db.update_subject(subjects))
                 # print(f"new_subjects: {new_subjects}")
                 for subject in list(new_subjects)[0:1]:
                     # print(f"subject: {subject}")
