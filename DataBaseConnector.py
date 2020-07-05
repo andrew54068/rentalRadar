@@ -216,7 +216,7 @@ class DataBaseConnector:
             print(error.msg)
             return None
 
-    def get_user_id(self, email):
+    def get_user_id_with_password_hash(self, email):
         sqlCommand = """
             SELECT id, password
             FROM user_info
