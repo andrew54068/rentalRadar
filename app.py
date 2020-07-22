@@ -30,7 +30,6 @@ jwt.init_app(app)
 
 # Crawler.start_crawl(db)
 
-
 @app.route('/api/v1/signUp', methods=['POST'])
 def sign_up():
     username = request.json.get('username', None)
@@ -42,7 +41,7 @@ def sign_up():
     if db.get_user_id_with_password_hash(email) is None:
         user_id = db.register_user(username, email, hashed_pw, phone)
 
-        if user_id is not None:
+        if user_id != None:
             ret = {
                 'access_token': create_access_token(identity=user_id),
                 'refresh_token': create_refresh_token(identity=user_id),
@@ -63,7 +62,7 @@ def login():
 
     user_id = pw_checker.check(email, password)
 
-    if user_id is not None:
+    if user_id != None:
         # Use create_access_token() and create_refresh_token() to create our
         # access and refresh tokens
         ret = {
@@ -79,7 +78,7 @@ def login():
 def anonymousLogin():
     deviceUUID = request.headers.get('deviceUUID', None)
 
-    if deviceUUID is not None:
+    if deviceUUID != None:
         # Use create_access_token() and create_refresh_token() to create our
         # access and refresh tokens
         ret = {
@@ -131,12 +130,12 @@ def get_user_token():
     current_user = get_jwt_identity()
     print(device_token)
 
-    if device_token is not None and type(device_token) is str:
+    if device_token != None and type(device_token) is str:
         user = User_token(current_user, str(device_token))
         db.update_user_token(user)
         return jsonify({'message': "success"}), 200
     else:
-        return jsonify({'error': "fcm_token not provided or is not string"}), 400
+        return jsonify({'error': "fcm_token not provided or != string"}), 400
 
 
 @app.route('/api/v1/user/preference', methods=['GET'])
@@ -177,10 +176,10 @@ def update_preference():
     pref = Preference(
         user_id,
         region,
-        kind if kind is not None else '',
-        rent_price if rent_price is not None else 0,
-        pattern if pattern is not None else '',
-        space if space is not None else ''
+        kind if kind != None else '',
+        rent_price if rent_price != None else 0,
+        pattern if pattern != None else '',
+        space if space != None else ''
     )
 
     try:

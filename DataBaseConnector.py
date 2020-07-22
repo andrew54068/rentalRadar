@@ -94,14 +94,14 @@ class DataBaseConnector:
         def mapping(datum):
             return (
                 datum.subject_id,
-                datum.name if datum.name is not None else '',
-                datum.price if datum.price is not None else '',
-                datum.location if datum.location is not None else '',
-                datum.sub_type if datum.sub_type is not None else '',
-                datum.size if datum.size is not None else '',
-                datum.floor if datum.floor is not None else '',
-                datum.contact_person if datum.contact_person is not None else '',
-                datum.url if datum.url is not None else '',
+                datum.name if datum.name != None else '',
+                datum.price if datum.price != None else '',
+                datum.location if datum.location != None else '',
+                datum.sub_type if datum.sub_type != None else '',
+                datum.size if datum.size != None else '',
+                datum.floor if datum.floor != None else '',
+                datum.contact_person if datum.contact_person != None else '',
+                datum.url if datum.url != None else '',
                 datetime_str,
                 datetime_str
             )
@@ -259,7 +259,7 @@ class DataBaseConnector:
             print(error.msg)
 
     def get_user_tokens(self, user_ids: list):
-        if type(user_ids) is not list:
+        if type(user_ids) != list:
             raise TypeError
 
         if len(user_ids) == 0:

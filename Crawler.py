@@ -21,10 +21,10 @@ def start_crawl(db: DataBaseConnector):
             url = "https://rent.591.com.tw/?kind=0&region=1&order=posttime&orderType=desc"
             subjects = DataProvider.get_subjects_from_url(url)
             manager = NotificationManager()
-            if subjects is not None:
+            if subjects != None:
                 new_subjects = list(db.update_subject(subjects))
                 # print(f"new_subjects: {new_subjects}")
-                for subject in list(new_subjects)[0:1]:
+                for subject in list(new_subjects):
                     # print(f"subject: {subject}")
 
                     user_ids = db.get_subscribe_user_from_subject(subject)
