@@ -3,8 +3,25 @@ version: '3.4'
 services:
   rentalserverside:
     image: rentalserverside:latest
+    container_name: rental-server
+    restart: always
     build: .
+    volumes: 
+      - "/Users/upn/Documents/self\ project/rentalRadar/rentalServerSide:/app"
     ports:
-      - 5000:5000
-    env_file:
-      - rental.env
+      - "5000:5000"
+    environment:
+      - DB_HOST=db
+    depends_on: 
+      - db
+  db:
+    image: mysql:8.0
+    container_name: rental-db
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes: 
+      - "/Users/upn/Documents/self\ project/rentalRadar/rentalServerSide/rentalDB:/var/lib/mysql"
+      - "/Users/upn/Documents/self\ project/rentalRadar/rentalServerSide/docker/my.cnf:/etc/mysql/my.cnf"
+    environment: 
+      - MYSQL_ROOT_PASSWORD=password
