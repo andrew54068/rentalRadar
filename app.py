@@ -110,10 +110,10 @@ def refresh():
 
 
 @app.route('/', methods=['POST'])
-@jwt_required
+# @jwt_required
 def index():
-    current_user = get_jwt_identity()
-    return f"Hello, World! {current_user}"
+    host = os.getenv("DB_HOST")
+    return f"Hello, World! {host}"
 
 
 # @app.route('/api/v1/user/token', methods=['GET'])
@@ -191,5 +191,8 @@ def update_preference():
 
 
 if __name__ == '__main__':
-    Crawler.start_crawl(db)
-    app.run(host='127.0.0.1', debug=True)
+    # Crawler.start_crawl(db)
+    app.run(host='0.0.0.0', debug=True)
+
+    # docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' rental-server
+    # app.run(host='172.17.0.3', debug=False)

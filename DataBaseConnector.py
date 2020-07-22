@@ -1,3 +1,4 @@
+import os
 import uuid
 # DB
 import mysql.connector as connector
@@ -18,10 +19,10 @@ class DataBaseConnector:
     def __init__(self):
         try:
             self.__db = connector.connect(
-                host="127.0.0.1",
+                host= os.getenv("DB_HOST"),
                 user="root",
                 password="password",
-                port="3307",
+                port="3306",
                 database="rental",
                 auth_plugin='mysql_native_password')
 
