@@ -1,8 +1,5 @@
 mysql="mysql:8.0"
-rentalServer="rentalserverside:latest"
-
-docker ps -q -f ancestor=$mysql | xargs docker stop | xargs docker rm
-docker ps -q -f ancestor=$rentalServer | xargs docker stop | xargs docker rm
+rentalServer="andrew54068/rental-server-side:latest"
 
 docker run \
 --restart always \
@@ -15,8 +12,6 @@ docker run \
 
 docker run \
 --name rental-server \
---link mysql-rental \
--v /Users/upn/Documents/self\ project/rentalRadar/rentalServerSide:/app \
 -p 5000:5000 \
---env-file ./rental.env \
--d $rentalServer 
+--env-file ./.env \
+-d $rentalServer

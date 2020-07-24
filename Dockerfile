@@ -24,4 +24,4 @@ RUN apt-get update && apt-get install -y procps
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 # ENTRYPOINT [ "python" ]
-CMD [ "python", "/app/app.py" ]
+CMD [ "python", "app.py" ]

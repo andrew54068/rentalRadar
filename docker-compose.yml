@@ -1,27 +1,23 @@
 version: '3.4'
 
 services:
-  rentalserverside:
-    image: rentalserverside:latest
+  rental-server-side:
+    image: andrew54068/rental-server-side:latest
     container_name: rental-server
-    restart: always
-    build: .
-    volumes: 
-      - "/Users/upn/Documents/self\ project/rentalRadar/rentalServerSide:/app"
     ports:
       - "5000:5000"
-    environment:
-      - DB_HOST=db
+    env_file: 
+      - ${ENV_FILE}
     depends_on: 
       - db
+    command: ["./wait-for-it.sh", "db:3306", "--", "python", "app.py"]
   db:
     image: mysql:8.0
     container_name: rental-db
-    restart: always
+    volumes: 
+      - "/home/ec2-user/rentalRadar/mysql:/var/lib/mysql"
+      - "/home/ec2-user/rentalRadar/mysql-config/my.cnf:/etc/mysql/my.cnf:ro"
     ports:
       - "3306:3306"
-    volumes: 
-      - "/Users/upn/Documents/self\ project/rentalRadar/rentalServerSide/rentalDB:/var/lib/mysql"
-      - "/Users/upn/Documents/self\ project/rentalRadar/rentalServerSide/docker/my.cnf:/etc/mysql/my.cnf"
     environment: 
-      - MYSQL_ROOT_PASSWORD=password
+      - "MYSQL_ROOT_PASSWORD=${MYSQL_SECRET}"
