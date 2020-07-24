@@ -19,14 +19,15 @@ class DataBaseConnector:
     def __init__(self):
         try:
             self.__db = connector.connect(
-                host= os.getenv("DB_HOST"),
+                host=os.getenv("DB_HOST"),
                 user="root",
-                password="password",
+                password=os.getenv("MYSQL_SECRET"),
                 port="3306",
-                database="rental",
                 auth_plugin='mysql_native_password')
-
             self.__cursor = self.__db.cursor(buffered=True, dictionary=True)
+            
+            self.__create_database()
+
             self.__create_subject_table()
             # self.__alter_subject_table()
             self.__create_user_info_table()
@@ -35,6 +36,17 @@ class DataBaseConnector:
             self.__create_user_preference_table()
             # self.alter_table_preference()
 
+        except connector.Error as error:
+            print(error)
+            print(error.msg)
+
+    def __create_database(self):
+        query = """
+        CREATE DATABASE IF NOT EXISTS rental;
+        USE rental;
+        """
+        try:
+            self.__execute_sql_command(query)
         except connector.Error as error:
             print(error)
             print(error.msg)
