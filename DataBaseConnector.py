@@ -172,6 +172,7 @@ class DataBaseConnector:
               `email` varchar(255) NOT NULL,
               `password` varchar(255) NOT NULL,
               `phone` varchar(255) NOT NULL,
+              `isAnonymous` boolean DEFAULT false,
               `create_date` datetime DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`id`),
               UNIQUE KEY `id` (`id`),
@@ -185,19 +186,19 @@ class DataBaseConnector:
             print(error.msg)
             raise SqlError(error.msg)
 
-    def register_user(self, user_name, email, password, phone):
+    def register_user(self, user_name, email, password, phone, isAnonymous=False):
         sqlCommand = """
             INSERT INTO user_info(
-                name, email, password, phone
+                name, email, password, phone, isAnonymous
             )
             VALUES(
-                %s, %s, %s, %s
+                %s, %s, %s, %s, %s
             )
         """
 
         try:
-            data = (user_name, email, password, phone)
-            self.__cursor.execute(sqlCommand, data, multi=True)
+            data = (user_name, email, password, phone, isAnonymous)
+            self.__cursor.execute(sqlCommand, data, multi=False)
             self.__connection.commit()
             latest_user_id = str(self.__cursor.lastrowid)
             print(f"latest_user_id: {latest_user_id}")
@@ -359,7 +360,6 @@ class DataBaseConnector:
             ON DUPLICATE KEY UPDATE 
             {preference.on_duplicate_key_update_string()}
         """
-        print(sqlCommand)
 
         try:
             self.__execute_sql_command(sqlCommand)

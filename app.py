@@ -79,8 +79,9 @@ def anonymousLogin():
     if deviceUUID != None:
         # Use create_access_token() and create_refresh_token() to create our
         # access and refresh tokens
+        user_id = db.register_user(user_name='', email='', password='', phone='', isAnonymous=True)
         ret = {
-            'access_token': create_access_token(identity=str(deviceUUID), expires_delta=False),
+            'access_token': create_access_token(identity=str(user_id), expires_delta=False),
         }
         return jsonify(ret), 200
     else:
