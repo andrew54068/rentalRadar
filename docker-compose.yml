@@ -6,11 +6,21 @@ services:
     container_name: rental-server
     ports:
       - "5000:5000"
+    restart: always
     env_file: 
       - ${ENV_FILE}
     depends_on: 
       - db
     command: ["./wait-for-it.sh", "db:3306", "--", "python", "app.py"]
+  crawler:
+    image: rental-crawler:latest
+    container_name: rental-crawler
+    build: .
+    env_file: 
+      - ${ENV_FILE}
+    depends_on: 
+      - db
+    command: ["./wait-for-it.sh", "db:3306", "--", "python", "Crawler.py"]
   db:
     image: mysql:8.0
     container_name: rental-db

@@ -11,7 +11,6 @@ from flask_jwt_extended import (
 from DataBaseConnector import DataBaseConnector
 from preference import Preference
 from User_token import User_token
-import Crawler
 from preference import PreferenceEncoder
 from PasswordChecher import PasswordChecher
 from rrError import (SqlError)
@@ -28,7 +27,6 @@ jwt = JWTManager()
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 jwt.init_app(app)
 
-# Crawler.start_crawl(db)
 
 @app.route('/api/v1/signUp', methods=['POST'])
 def sign_up():
@@ -126,12 +124,12 @@ def fetch_user_token(user_id: str):
 @jwt_required
 def get_user_token():
     request_data = request.json
-    device_token = request_data.get('fcm_token')
+    fcm_token = request_data.get('fcm_token')
     current_user = get_jwt_identity()
-    print(device_token)
+    print(fcm_token)
 
-    if device_token != None and type(device_token) is str:
-        user = User_token(current_user, str(device_token))
+    if fcm_token != None and type(fcm_token) is str:
+        user = User_token(current_user, str(fcm_token))
         db.update_user_token(user)
         return jsonify({'message': "success"}), 200
     else:
@@ -191,8 +189,7 @@ def update_preference():
 
 
 if __name__ == '__main__':
-    # Crawler.start_crawl(db)
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True, load_dotenv=True)
 
     # docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' rental-server
     # app.run(host='172.17.0.3', debug=False)

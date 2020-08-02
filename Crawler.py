@@ -1,23 +1,20 @@
-from dotenv import load_dotenv
-# load_dotenv(verbose=True)
+from os.path import join, dirname
 import time
 import sys
 
-import DataBaseConnector as DataBaseConnector
+from dotenv import load_dotenv
+# from subject import Subject
+from DataBaseConnector import DataBaseConnector
 import DataProvider as DataProvider
 
-from preference import Preference
 from push_notification import NotificationManager
 
-# db = DataBaseConnector()
-# db.alter_table_preference()
-# db.alter_table()
-# db.drop_table()
-# db.clear_table()
+env_path = join(dirname(__file__), '.env.dev')
+load_dotenv(dotenv_path=env_path, verbose=True)
 
 def start_crawl(db: DataBaseConnector):
     try:
-        while 1: 
+        while 1:
             url = "https://rent.591.com.tw/?kind=0&region=1&order=posttime&orderType=desc"
             subjects = DataProvider.get_subjects_from_url(url)
             manager = NotificationManager()
@@ -41,3 +38,8 @@ def start_crawl(db: DataBaseConnector):
             time.sleep(20)
     except:
         raise AssertionError("Oops!", str(sys.exc_info()[1]), "occurred.")
+
+
+if __name__ == '__main__':
+    db = DataBaseConnector()
+    start_crawl(db)

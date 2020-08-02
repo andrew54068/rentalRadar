@@ -18,26 +18,24 @@ class DataBaseConnector:
 
     def __init__(self):
         try:
-            self.__db = connector.connect(
+            self.__connection = connector.connect(
                 host=os.getenv("DB_HOST"),
                 user="root",
                 password=os.getenv("MYSQL_SECRET"),
                 port="3306",
+                database='rental',
                 auth_plugin='mysql_native_password')
-            self.__cursor = self.__db.cursor(buffered=True, dictionary=True)
-            
+            self.__cursor = self.__connection.cursor(buffered=False, dictionary=True)
+
             self.__create_database()
 
             self.__create_subject_table()
-            # self.__alter_subject_table()
             self.__create_user_info_table()
             self.__create_user_token_table()
-            # self.__alter_user_token()
             self.__create_user_preference_table()
-            # self.alter_table_preference()
+            self.__connection.commit()
 
         except connector.Error as error:
-            print(error)
             print(error.msg)
 
     def __create_database(self):
@@ -48,7 +46,6 @@ class DataBaseConnector:
         try:
             self.__execute_sql_command(query)
         except connector.Error as error:
-            print(error)
             print(error.msg)
 
     def __create_subject_table(self):
@@ -76,24 +73,25 @@ class DataBaseConnector:
         try:
             self.__execute_sql_command(query)
         except connector.Error as error:
-            print(error)
             print(error.msg)
 
     def update_subject(self, subjects):
 
         current_time = datetime.now()
         datetime_str = current_time.strftime("%Y/%m/%d %H:%M:%S")
-        # print(f"current_time: {datetime_str}")
 
         sqlCommand = """
             INSERT INTO rental_subjects(
-            subject_id, name, price, location, sub_type, size, floor, contact_person, url, created_at, updated_at
+            subject_id, name, region, section, kind, price, location, sub_type, size, floor, contact_person, url, created_at, updated_at
             ) 
             VALUES(
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             ON DUPLICATE KEY UPDATE 
             name=VALUES(name), 
+            region=VALUES(region),
+            section=VALUES(section),
+            kind=VALUES(kind),
             price=VALUES(price), 
             location=VALUES(location), 
             sub_type=VALUES(sub_type), 
@@ -108,6 +106,9 @@ class DataBaseConnector:
             return (
                 datum.subject_id,
                 datum.name if datum.name != None else '',
+                datum.region if datum.region != None else '',
+                datum.section if datum.section != None else '',
+                datum.kind if datum.kind != None else '',
                 datum.price if datum.price != None else '',
                 datum.location if datum.location != None else '',
                 datum.sub_type if datum.sub_type != None else '',
@@ -121,7 +122,8 @@ class DataBaseConnector:
 
         subjects = map(mapping, subjects)
         self.__cursor.executemany(sqlCommand, subjects)
-        self.__db.commit()
+        self.__connection.commit()
+
 
         sqlQuery = f"""
             SELECT *
@@ -129,8 +131,7 @@ class DataBaseConnector:
             WHERE created_at = '{datetime_str}';
         """
 
-        self.__execute_sql_command(sqlQuery)
-        sql_result = self.__cursor.fetchall()
+        sql_result = self.__get_sql_result(sqlQuery)
 
         def mapping_to_subject(datum):
             return Subject(datum['subject_id'],
@@ -148,7 +149,7 @@ class DataBaseConnector:
                            datum['url'])
 
         result = map(mapping_to_subject, sql_result)
-        
+
         return result
 
     def drop_table(self):
@@ -162,30 +163,6 @@ class DataBaseConnector:
         TRUNCATE TABLE rental_subjects
         """
         self.__execute_sql_command(sqlCommand)
-
-    # def __alter_subject_table(self):
-    #     sqlCommand = """
-    #     ALTER TABLE rental_subjects 
-    #     ADD `region` VARCHAR(10) NOT NULL DEFAULT '',
-    #     ADD `section` VARCHAR(10),
-	# 	ADD `kind` VARCHAR(15);
-    #     ALTER TABLE "table_name"
-    #     """
-    #     self.__execute_sql_command(sqlCommand)
-
-    def __alter_user_token(self):
-        sqlCommand = """
-        ALTER TABLE user_token
-        RENAME COLUMN device_token TO fcm_token;
-        """
-        self.__execute_sql_command(sqlCommand)
-
-    def __execute_sql_command(self, command: str):
-        try:
-            self.__cursor.execute(command)
-            self.__db.commit()
-        except connector.Error as error:
-            raise error
 
     def __create_user_info_table(self):
         query = """CREATE TABLE IF NOT EXISTS `user_info` (
@@ -202,11 +179,10 @@ class DataBaseConnector:
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
             """
         try:
-            self.__db._execute_query(query)
-            self.__db.commit()
+            self.__execute_sql_command(query)
         except connector.Error as error:
-            print(error)
             print(error.msg)
+            raise SqlError(error.msg)
 
     def register_user(self, user_name, email, password, phone):
         sqlCommand = """
@@ -220,15 +196,14 @@ class DataBaseConnector:
 
         try:
             data = (user_name, email, password, phone)
-            self.__cursor.execute(sqlCommand, data)
-            self.__db.commit()
+            self.__cursor.execute(sqlCommand, data, multi=True)
+            self.__connection.commit()
             latest_user_id = str(self.__cursor.lastrowid)
             print(f"latest_user_id: {latest_user_id}")
             return latest_user_id
         except connector.Error as error:
-            print(error)
             print(error.msg)
-            return None
+            raise SqlError(error.msg)
 
     def get_user_id_with_password_hash(self, email):
         sqlCommand = """
@@ -238,10 +213,7 @@ class DataBaseConnector:
         """
 
         try:
-            email = (email,)
-            self.__cursor.execute(sqlCommand, email)
-            self.__db.commit()
-            result = self.__cursor.fetchall()
+            result = self.__get_sql_result(sqlCommand, email)
             if len(result) > 0:
                 print(f"result: {result}")
                 first_result = result[0]
@@ -252,24 +224,24 @@ class DataBaseConnector:
                 return None
 
         except connector.Error as error:
-            print(error)
             print(error.msg)
+            raise SqlError(error.msg)
 
     def __create_user_token_table(self):
         query = """CREATE TABLE IF NOT EXISTS `user_token` (
               `id` varchar(36) NOT NULL,
-              `device_token` varchar(255),
+              `fcm_token` varchar(255),
               `create_date` datetime DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`id`),
               UNIQUE KEY `id` (`id`),
-              UNIQUE KEY `device_token` (`device_token`)
+              UNIQUE KEY `fcm_token` (`fcm_token`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
             """
         try:
             self.__execute_sql_command(query)
         except connector.Error as error:
-            print(error)
             print(error.msg)
+            raise SqlError(error.msg)
 
     def get_user_tokens(self, user_ids: list):
         if type(user_ids) != list:
@@ -285,8 +257,7 @@ class DataBaseConnector:
         """
         print(f"get user fcm_token: {sqlCommand}")
         try:
-            self.__execute_sql_command(sqlCommand)
-            query_result = self.__cursor.fetchall()
+            query_result = self.__get_sql_result(sqlCommand)
             print(f"query_result: {query_result}")
             result = []
             for data in query_result:
@@ -294,13 +265,13 @@ class DataBaseConnector:
             return result
 
         except connector.Error as error:
-            print(error)
             print(error.msg)
+            raise SqlError(error.msg)
 
     def update_user_token(self, user_token: User_token):
         sqlCommand = """
             INSERT INTO user_token(
-                id, device_token
+                id, fcm_token
             )
             VALUES(
                 %s, %s
@@ -308,12 +279,12 @@ class DataBaseConnector:
         """
 
         try:
-            data = (user_token.user_id, user_token.device_token)
+            data = (user_token.user_id, user_token.fcm_token)
             self.__cursor.execute(sqlCommand, data)
-            self.__db.commit()
+            self.__connection.commit()
         except connector.Error as error:
-            print(error)
             print(error.msg)
+            raise SqlError(error.msg)
 
     def alter_table_preference(self):
         query = """
@@ -336,24 +307,21 @@ class DataBaseConnector:
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
             """
         try:
-            self.__db._execute_query(query)
-            self.__db.commit()
+            self.__execute_sql_command(query)
         except connector.Error as error:
-            print(error)
             print(error.msg)
+            raise SqlError(error.msg)
 
     def get_user_preference(self, user_id: str):
         sqlCommand = f"""
         SELECT region, kind, rent_price, pattern, space
         FROM user_preference
-        WHERE user_id = %s
+        WHERE id = %s
         """
 
         try:
             id = (user_id,)
-            self.__cursor.execute(sqlCommand, id)
-            self.__db.commit()
-            result = self.__cursor.fetchall()
+            result = self.__get_sql_result(sqlCommand, param=id)
             print(result)
             if len(result) > 0:
                 # for element in result
@@ -361,7 +329,12 @@ class DataBaseConnector:
                 for element in result:
                     if len(element) == 5:
                         pref = Preference(
-                            user_id, element[0], element[1], element[2], element[3], element[4])
+                            user_id=user_id, 
+                            region=element['region'],
+                            kind=element['kind'],
+                            rent_price=element['rent_price'],
+                            pattern=element['pattern'],
+                            space=element['space'])
                         pres.append(pref)
                     else:
                         raise TypeError
@@ -370,8 +343,8 @@ class DataBaseConnector:
                 return None
 
         except connector.Error as error:
-            print(error)
             print(error.msg)
+            raise SqlError(error.msg)
 
     def update_user_preference(self, preference: Preference):
         sqlCommand = f"""
@@ -388,9 +361,7 @@ class DataBaseConnector:
 
         try:
             self.__execute_sql_command(sqlCommand)
-            self.__db.commit()
         except connector.Error as error:
-            print(error)
             print(error.msg)
             raise SqlError(error.msg)
 
@@ -404,14 +375,30 @@ class DataBaseConnector:
         """
 
         try:
-            self.__execute_sql_command(sqlCommand)
-            query_result = self.__cursor.fetchall()
+            query_result = self.__get_sql_result(sqlCommand)
             result = []
             for data in query_result:
                 if len(data) > 0:
                     result.append(str(data['user_id']))
             return result
         except connector.Error as error:
-            raise error
-            print(error)
             print(error.msg)
+            raise error
+
+
+    def __execute_sql_command(self, command: str):
+        try:
+            self.__cursor.execute(command, multi=True)
+            self.__connection.commit()
+        except connector.Error as error:
+            raise error
+
+    def __get_sql_result(self, command: str, param=None):
+        try: 
+            self.__cursor.execute(command, params=param, multi=False)
+            print(f"have unread result: {self.__cursor._have_unread_result()}")
+            result = self.__cursor.fetchall()
+            self.__connection.commit()
+            return result
+        except connector.Error as error:
+            raise error
