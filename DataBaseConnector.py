@@ -32,6 +32,7 @@ class DataBaseConnector:
             self.__create_subject_table()
             self.__create_user_info_table()
             self.__create_user_token_table()
+            print(f"create user token table")
             self.__create_user_preference_table()
             self.__connection.commit()
 
@@ -44,7 +45,7 @@ class DataBaseConnector:
         USE rental;
         """
         try:
-            self.__execute_sql_command(query)
+            self.__execute_sql_command(query, multi=True)
         except connector.Error as error:
             print(error.msg)
 
@@ -229,7 +230,8 @@ class DataBaseConnector:
 
     def __create_user_token_table(self):
         query = """CREATE TABLE IF NOT EXISTS `user_token` (
-              `id` varchar(36) NOT NULL,
+              `id` int(11) NOT NULL AUTO_INCREMENT,
+              `user_id` varchar(36) NOT NULL,
               `fcm_token` varchar(255),
               `create_date` datetime DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`id`),
@@ -253,7 +255,7 @@ class DataBaseConnector:
         sqlCommand = f"""
         SELECT fcm_token
         FROM user_token
-        WHERE id IN ({", ".join(user_ids)})
+        WHERE user_id IN ({", ".join(user_ids)})
         """
         print(f"get user fcm_token: {sqlCommand}")
         try:
@@ -271,7 +273,7 @@ class DataBaseConnector:
     def update_user_token(self, user_token: User_token):
         sqlCommand = """
             INSERT INTO user_token(
-                id, fcm_token
+                user_id, fcm_token
             )
             VALUES(
                 %s, %s
@@ -386,9 +388,9 @@ class DataBaseConnector:
             raise error
 
 
-    def __execute_sql_command(self, command: str):
+    def __execute_sql_command(self, command: str, multi=False):
         try:
-            self.__cursor.execute(command, multi=True)
+            self.__cursor.execute(command, multi=multi)
             self.__connection.commit()
         except connector.Error as error:
             raise error
