@@ -172,7 +172,7 @@ class DataBaseConnector:
               `email` varchar(255) NOT NULL,
               `password` varchar(255) NOT NULL,
               `phone` varchar(255) NOT NULL,
-              `isAnonymous` boolean DEFAULT false,
+              `isAnonymous` boolean NOT NULL DEFAULT false,
               `create_date` datetime DEFAULT CURRENT_TIMESTAMP,
               PRIMARY KEY (`id`),
               UNIQUE KEY `id` (`id`),
@@ -215,7 +215,8 @@ class DataBaseConnector:
         """
 
         try:
-            result = self.__get_sql_result(sqlCommand, email)
+            data = (email,)
+            result = self.__get_sql_result(sqlCommand, data)
             if len(result) > 0:
                 print(f"result: {result}")
                 first_result = result[0]
