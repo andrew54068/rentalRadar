@@ -140,7 +140,7 @@ def get_user_token():
 @app.route('/api/v1/user/preference', methods=['GET'])
 @jwt_required
 def fetch_tasks():
-    user_id = request.args.get('user_id')
+    user_id = get_jwt_identity()
     try:
         result = db.get_user_preference(user_id)
     except TypeError:
