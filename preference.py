@@ -7,9 +7,10 @@ class Preference:
     # kind: 分租套房
     # pattern: 3房
     # space: 坪數
-    def __init__(self, user_id: str, region: str, kind: str, rent_price: int, pattern: str, space: str):
+    def __init__(self, user_id: str, region: str, section: str, kind: str, rent_price: int, pattern: str, space: str):
         self.user_id = user_id
         self.region = region
+        self.section = section
         self.kind = kind
         self.rent_price = rent_price
         self.pattern = pattern
@@ -18,6 +19,7 @@ class Preference:
     def __str__(self):
         return ("user_id: " + str(self.user_id) + "\n" +
         "region: " + str(self.region) + "\n" +
+        "section: " + str(self.section) + "\n" +
         "kind: " + str(self.kind) + "\n" +
         "rent_price: " + str(self.rent_price) + "\n" +
         "pattern: " + str(self.pattern) + "\n" +
@@ -30,6 +32,7 @@ class Preference:
     def sql_insert_field_string(self):
         result_list = ["id"]
         self.region != None and result_list.append("region")
+        self.section != None and result_list.append("section")
         self.kind != None and result_list.append("kind")
         self.rent_price != None and result_list.append("rent_price")
         self.pattern != None and result_list.append("pattern")
@@ -40,6 +43,7 @@ class Preference:
     def sql_insert_value_string(self):
         result_list = [f"{self.user_id}"]
         self.region != None and result_list.append(f"'{self.region}'")
+        self.section != None and result_list.append(f"'{self.section}'")
         self.kind != None and result_list.append(f"'{self.kind}'")
         self.rent_price != None and result_list.append(str(self.rent_price))
         self.pattern != None and result_list.append(f"'{self.pattern}'")
@@ -49,6 +53,7 @@ class Preference:
     def on_duplicate_key_update_string(self):
         result_list = []
         self.region != None and result_list.append(f"region=VALUES(region)")
+        self.section != None and result_list.append(f"section=VALUES(section)")
         self.kind != None and result_list.append(f"kind=VALUES(kind)")
         self.rent_price != None and result_list.append(f"rent_price=VALUES(rent_price)")
         self.pattern != None and result_list.append(f"pattern=VALUES(pattern)")

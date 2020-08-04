@@ -160,6 +160,7 @@ def update_preference():
 
     user_id = get_jwt_identity()
     region = request_data.get('region')
+    section = request_data.get('section')
     kind = request_data.get('kind')
 
     rent_price = request_data.get('rent_price')
@@ -173,12 +174,13 @@ def update_preference():
         return jsonify({'error': "region not provided."}), 400
 
     pref = Preference(
-        user_id,
-        region,
-        kind if kind != None else '',
-        rent_price if rent_price != None else 0,
-        pattern if pattern != None else '',
-        space if space != None else ''
+        user_id=user_id,
+        region=region,
+        section=section,
+        kind=(kind if kind != None else ''),
+        rent_price=(rent_price if rent_price != None else 0),
+        pattern=(pattern if pattern != None else ''),
+        space=(space if space != None else '')
     )
 
     try:
