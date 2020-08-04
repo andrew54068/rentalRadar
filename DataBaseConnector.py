@@ -32,7 +32,6 @@ class DataBaseConnector:
             self.__create_subject_table()
             self.__create_user_info_table()
             self.__create_user_token_table()
-            print(f"create user token table")
             self.__create_user_preference_table()
             self.__connection.commit()
 
@@ -326,7 +325,7 @@ class DataBaseConnector:
         try:
             id = (user_id,)
             result = self.__get_sql_result(sqlCommand, param=id)
-            print(result)
+
             if len(result) > 0:
                 # for element in result
                 pres = []
@@ -399,7 +398,6 @@ class DataBaseConnector:
     def __get_sql_result(self, command: str, param=None):
         try: 
             self.__cursor.execute(command, params=param, multi=False)
-            print(f"have unread result: {self.__cursor._have_unread_result()}")
             result = self.__cursor.fetchall()
             self.__connection.commit()
             return result
