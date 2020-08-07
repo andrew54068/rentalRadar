@@ -23,7 +23,6 @@ class DataBaseConnector:
                 user="root",
                 password=os.getenv("MYSQL_SECRET"),
                 port="3306",
-                database='rental',
                 auth_plugin='mysql_native_password')
             self.__cursor = self.__connection.cursor(buffered=False, dictionary=True)
 
@@ -40,11 +39,15 @@ class DataBaseConnector:
 
     def __create_database(self):
         query = """
-        CREATE DATABASE IF NOT EXISTS rental;
+        CREATE DATABASE IF NOT EXISTS `rental`;
+        """
+
+        query2 = """
         USE rental;
         """
         try:
-            self.__execute_sql_command(query, multi=True)
+            self.__execute_sql_command(query)
+            self.__execute_sql_command(query2)
         except connector.Error as error:
             print(error.msg)
 
@@ -197,7 +200,7 @@ class DataBaseConnector:
 
         try:
             data = (user_name, email, password, phone, isAnonymous)
-            self.__cursor.execute(sqlCommand, data, multi=False)
+            self.__cursor.execute(sqlCommand, data)
             self.__connection.commit()
             latest_user_id = str(self.__cursor.lastrowid)
             print(f"latest_user_id: {latest_user_id}")
@@ -388,16 +391,16 @@ class DataBaseConnector:
             raise error
 
 
-    def __execute_sql_command(self, command: str, multi=False):
+    def __execute_sql_command(self, command: str):
         try:
-            self.__cursor.execute(command, multi=multi)
+            self.__cursor.execute(command)
             self.__connection.commit()
         except connector.Error as error:
             raise error
 
     def __get_sql_result(self, command: str, param=None):
         try: 
-            self.__cursor.execute(command, params=param, multi=False)
+            self.__cursor.execute(command, params=param)
             result = self.__cursor.fetchall()
             self.__connection.commit()
             return result
