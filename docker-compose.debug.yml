@@ -19,5 +19,3 @@ services:
       - "/Users/upn/Documents/self project/rentalRadar/rentalServerSide/docker/my.cnf:/etc/mysql/my.cnf:ro"
     environment: 
       - MYSQL_ROOT_PASSWORD=password
-    # cap_add: 
-    #   - SYS_NICE 

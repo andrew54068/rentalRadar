@@ -13,9 +13,8 @@ services:
       - db
     command: ["./wait-for-it.sh", "db:3306", "--", "python", "app.py"]
   crawler:
-    image: rental-crawler:latest
+    image: andrew54068/rental-crawler:latest
     container_name: rental-crawler
-    build: .
     env_file: 
       - ${ENV_FILE}
     depends_on: 
@@ -30,4 +29,4 @@ services:
     ports:
       - "3306:3306"
     environment: 
-      - "MYSQL_ROOT_PASSWORD=${MYSQL_SECRET}"
+      - MYSQL_ROOT_PASSWORD=${MYSQL_SECRET}
